@@ -1,89 +1,86 @@
 import React, { Component } from 'react';
 import NewsItem from './NewsItem';
+import Spinner from './Spinner';
+import PropTypes from 'prop-types';  
 
 class News extends Component {
 
-    articals= [
-        {
-          "source": {
-            "id": "bbc-sport",
-            "name": "BBC Sport"
-          },
-          "author": null,
-          "title": "South Asian Heritage Month: From cricket to weightlifting, four athletes trailblazing in their sport",
-          "description": "To mark South Asian Heritage Month, BBC Sport takes a look at four athletes, in Britain and across the world, who are trailblazers their sport.",
-          "url": "http://www.bbc.co.uk/sport/articles/cvg44p2v4zvo",
-          "urlToImage": "https://ichef.bbci.co.uk/news/1024/branded_sport/dc86/live/0d98f940-58c7-11ef-b2d2-cdb23d5d7c5b.jpg",
-          "publishedAt": "2024-08-13T08:37:14.4619713Z",
-          "content": "Scotland's Abtaha Maqsood became the first British female cricket player to wear the hijab.\r\nBorn in Glasgow to Pakistani parents, the 25-year-old plays for Birmingham Phoenix, Sunrisers and Middlese… [+704 chars]"
-        },
-        {
-          "source": {
-            "id": "bbc-sport",
-            "name": "BBC Sport"
-          },
-          "author": null,
-          "title": "James Anderson: England great 'open' to continuing career in white ball cricket",
-          "description": "James Anderson says he is \"still fit enough\" to continue his career as he considers a move into white ball cricket.",
-          "url": "http://www.bbc.co.uk/sport/cricket/articles/cgrjnz8pgkvo",
-          "urlToImage": "https://ichef.bbci.co.uk/news/1024/branded_sport/27d8/live/96a5ec10-5940-11ef-94ec-63bde61d9499.jpg",
-          "publishedAt": "2024-08-13T07:52:17.99265Z",
-          "content": "\"I might be in a bit of denial because I'm well aware I won't play for England again, but I've still not made a decision on my actual cricket career,\" Anderson told the Press Association.\r\n\"There's d… [+729 chars]"
-        },
-        {
-          "source": {
-            "id": "espn-cric-info",
-            "name": "ESPN Cric Info"
-          },
-          "author": null,
-          "title": "PCB hands Umar Akmal three-year ban from all cricket | ESPNcricinfo.com",
-          "description": "Penalty after the batsman pleaded guilty to not reporting corrupt approaches | ESPNcricinfo.com",
-          "url": "http://www.espncricinfo.com/story/_/id/29103103/pcb-hands-umar-akmal-three-year-ban-all-cricket",
-          "urlToImage": "https://a4.espncdn.com/combiner/i?img=%2Fi%2Fcricket%2Fcricinfo%2F1099495_800x450.jpg",
-          "publishedAt": "2020-04-27T11:41:47Z",
-          "content": "Umar Akmal's troubled cricket career has hit its biggest roadblock yet, with the PCB handing him a ban from all representative cricket for three years after he pleaded guilty of failing to report det… [+1506 chars]"
-        },
-        {
-          "source": {
-            "id": "espn-cric-info",
-            "name": "ESPN Cric Info"
-          },
-          "author": null,
-          "title": "What we learned from watching the 1992 World Cup final in full again | ESPNcricinfo.com",
-          "description": "Wides, lbw calls, swing - plenty of things were different in white-ball cricket back then | ESPNcricinfo.com",
-          "url": "http://www.espncricinfo.com/story/_/id/28970907/learned-watching-1992-world-cup-final-full-again",
-          "urlToImage": "https://a4.espncdn.com/combiner/i?img=%2Fi%2Fcricket%2Fcricinfo%2F1219926_1296x729.jpg",
-          "publishedAt": "2020-03-30T15:26:05Z",
-          "content": "Last week, we at ESPNcricinfo did something we have been thinking of doing for eight years now: pretend-live ball-by-ball commentary for a classic cricket match. We knew the result, yes, but we tried… [+6823 chars]"
-        }
-      ]
-      constructor()
-      {
-        super();
-        this.state=
-        {
-            articals:this.articals,
-            loading:false
-            
-        }
+    static propTypes = {
+        country: PropTypes.string,
+        pageSize:PropTypes.number,
+        category:PropTypes.string,
+      };
+    
+      static defaultProps = {
+        country: 'in',
+        pageSize:8,
+        category:"sports"
       }
 
+    constructor(props) {
+        super(props);
+        this.state = {
+            articles: [],  // Corrected the typo here
+            loading:false,
+            page:1,
+            totalResults:0,
+            pageNumber:1
+
+        };
+    }
+    async update()
+    {
+        this.setState({loading:true});
+        let url=`https://newsapi.org/v2/top-headlines?country=${this.props.country}&category=${this.props.category}&apiKey=399cba7395a840e3b460bbd44621c165&page=${this.state.page}&pageSize=${this.props.pageSize}`;
+        let data=await fetch(url);
+        let fetchData=await data.json();
+        
+        this.setState({articles:fetchData.articles,
+            totalResults:fetchData.totalResults,
+            pageNumber:1,
+            loading:false
+
+        });
+    }
+    async componentDidMount()
+    {
+        this.update();
+    }  
+   
+    handlePrevClick=async () =>
+    {
+        await this.setState({page:this.state.page-1});
+        this.update();
+    }
+    handleNextClick= async () =>
+    {
+        await this.setState({ page:this.state.page+1});
+        this.update();
+    }
     render() {
         return (
             <div className="container my-3">
-            <h2>NewsMonkey- Top headlines</h2>
-           
-                <div className='row'>
-                {this.state.articals.map((element)=>{
+            <h2 className="text-center">NewsMonkey- Top headlines</h2>
+            <div className="text-center">
+            {this.state.loading && <Spinner/>}
+            </div>
+            <div className='row'>
+                {!this.state.loading && this.state.articles.map((element)=>{
                     // console.log(element.url);
                 return (
                     <div className="col-md-4"  key={element.url}>
-                        <NewsItem title={element.title} description={element.description} imageUrl={element.urlToImage} newsUrl={element.url}/>
+                        <NewsItem title={element.title} description={element.description} imageUrl={!element.urlToImage?"https://substackcdn.com/image/fetch/w_1200,h_600,c_fill,f_jpg,q_auto:good,fl_progressive:steep,g_auto/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fd1ea64b0-58eb-4a90-ae0a-c889476107a6_480x266.webp":element.urlToImage} 
+                        newsUrl={element.url} author={element.author} date={new Date(element.publishedAt).toGMTString()}
+                        source={element.source.name}/>
                     </div>
                 
             
                 )
             })}
+            </div>
+            <div className="container d-flex justify-content-between">
+                <button disabled={this.state.page<=1} type="button" className="btn btn-dark" onClick={this.handlePrevClick}>&larr; Previous</button>
+                <button type="button" disabled={this.state.page+1>Math.ceil(this.state.totalResults/this.props.pageSize)} className="btn btn-dark" onClick={this.handleNextClick}>Next &rarr;</button>
             </div>
             </div>
             
